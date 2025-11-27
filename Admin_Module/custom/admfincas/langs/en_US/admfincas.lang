@@ -1,0 +1,42 @@
+# Translation file
+
+#
+# Generic
+#
+
+# Module label 'ModuleAdmfincasName'
+ModuleAdmfincasName = Admfincas
+# Module description 'ModuleAdmfincasDesc'
+ModuleAdmfincasDesc = Admfincas description
+
+#
+# Admin page
+#
+AdmfincasSetup = Admfincas setup
+Settings = Settings
+AdmfincasSetupPage = Admfincas setup page
+NewSection=New section
+ADMFINCAS_MYPARAM1 = My param 1
+ADMFINCAS_MYPARAM1Tooltip = My param 1 tooltip
+ADMFINCAS_MYPARAM2=My param 2
+ADMFINCAS_MYPARAM2Tooltip=My param 2 tooltip
+
+
+#
+# About page
+#
+About = About
+AdmfincasAbout = About Admfincas
+AdmfincasAboutPage = Admfincas about page
+
+#
+# Sample page
+#
+AdmfincasArea = Home Admfincas
+MyPageName = My page name
+
+#
+# Sample widget
+#
+MyWidget = My widget
+MyWidgetDescription = My widget description
