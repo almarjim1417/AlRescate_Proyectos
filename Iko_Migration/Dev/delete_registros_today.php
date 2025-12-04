@@ -1,67 +1,78 @@
 <?php
 // ==============================================================================
-// SCRIPT DE LIMPIEZA COMPLETA (Incluye Clientes/Terceros)
-// ==============================================================================
-// Borra TODOS los registros creados "HOY" en las 6 tablas afectadas.
+// SCRIPT DE BORRADO DEFINITIVO (Usando Timestamp y Huellas)
 // ==============================================================================
 
-// CONFIGURACIÓN
 $db_host = 'localhost';
 $db_user = 'root';
 $db_pass = 'root';
 $db_name = 'dol_ikonik';
 
-// OBTENER FECHA DE HOY
-$fecha_hoy = date('Y-m-d'); // Ej: 2025-11-24
-$patron_fecha = $fecha_hoy . '%'; // Para el LIKE SQL
-
-echo "<h1>Limpieza TOTAL del día: <span style='color:red'>$fecha_hoy</span></h1>";
-echo "<p>Iniciando borrado en cascada (Hijos -> Padres -> Abuelos)...</p>";
+echo "<h1>Limpieza Definitiva (Por TMS y Huellas)</h1>";
 
 try {
     $dsn = "mysql:host=$db_host;dbname=$db_name;charset=utf8mb4";
     $pdo = new PDO($dsn, $db_user, $db_pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
-    die("<h3 style='color:red'>Error de conexión: " . $e->getMessage() . "</h3>");
+    die("Error: " . $e->getMessage());
 }
 
-// --- FUNCIÓN DE BORRADO ---
-function borrar_tabla($pdo, $tabla, $columna_fecha, $patron)
+function ejecutar_borrado($pdo, $sql, $params = [])
 {
-    try {
-        $sql = "DELETE FROM $tabla WHERE $columna_fecha LIKE ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$patron]);
-        $count = $stmt->rowCount();
-
-        $color = $count > 0 ? "red" : "gray";
-        echo "Tabla <strong>$tabla</strong>: <span style='color:$color'>$count registros eliminados</span>.<br>";
-        return $count;
-    } catch (PDOException $e) {
-        echo "Error borrando en $tabla: " . $e->getMessage() . "<br>";
-        return 0;
-    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->rowCount();
 }
 
-// 1. Datos Financieros (Hijo de Sitios)
-borrar_tabla($pdo, 'presupuestos_indicadores', 'fecha_registro', $patron_fecha);
+// 1. DESACTIVAR PROTECCIÓN (Para borrar padres sin que se quejen los hijos)
+$pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
 
-// 2. Extras de Proyectos (Hijo de Proyectos)
-borrar_tabla($pdo, 'llx_projet_extrafields', 'tms', $patron_fecha);
+// ---------------------------------------------------------
+// CRITERIO 1: BORRAR POR HUELLA DE TEXTO (Lo más seguro)
+// ---------------------------------------------------------
+echo "<h3>Fase 1: Borrado por Huella de Texto...</h3>";
 
-// 3. Proyectos (Padre de Extras, Hijo de Terceros)
-// IMPORTANTE: Borrar esto libera a los clientes para poder ser borrados después
-borrar_tabla($pdo, 'llx_projet', 'datec', $patron_fecha);
+// Borrar Eventos generados
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_actioncomm WHERE note LIKE '%--- DATOS ORIGINALES EXCEL ---%'");
+echo "Eventos borrados: $n <br>";
 
-// 4. Extras de Sitios
-borrar_tabla($pdo, 'llx_socpeople_extrafields', 'tms', $patron_fecha);
+// Borrar Extras de Proyectos (Vinculados a proyectos de la migración)
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_projet_extrafields WHERE fk_object IN (SELECT rowid FROM llx_projet WHERE description LIKE '%--- DATOS IMPORTADOS ---%')");
+echo "Extras Proyectos borrados: $n <br>";
 
-// 5. Sitios (Contactos)
-borrar_tabla($pdo, 'llx_socpeople', 'datec', $patron_fecha);
+// Borrar Proyectos
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_projet WHERE description LIKE '%--- DATOS IMPORTADOS ---%'");
+echo "Proyectos borrados: $n <br>";
 
-// 6. CLIENTES / TERCEROS (Nuevo paso)
-// Solo podemos borrarlos si ya no tienen proyectos vinculados (hecho en paso 3)
-borrar_tabla($pdo, 'llx_societe', 'datec', $patron_fecha);
+// Borrar Extras de Sitios Auto-creados
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_socpeople_extrafields WHERE fk_object IN (SELECT rowid FROM llx_socpeople WHERE note_private = 'Generado Auto')");
+echo "Extras Sitios borrados: $n <br>";
 
-echo "<h3>✅ Base de datos limpia como una patena.</h3>";
-echo "<a href='../migracion_pdo.php'>Volver a intentar la Migración</a>";
+// Borrar Sitios Auto-creados
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_socpeople WHERE note_private = 'Generado Auto'");
+echo "Sitios borrados: $n <br>";
+
+// ---------------------------------------------------------
+// CRITERIO 2: BORRAR POR TIMESTAMP DE HOY (Lo que se haya escapado)
+// ---------------------------------------------------------
+echo "<h3>Fase 2: Barrido por Fecha de Sistema (TMS)...</h3>";
+
+// Borramos lo que se haya modificado/creado en el sistema en las últimas 24h
+// NOTA: Usamos NOW() - INTERVAL 1 DAY para cubrir todo el día de hoy.
+
+// Dinero (Tabla personalizada)
+$n = ejecutar_borrado($pdo, "DELETE FROM presupuestos_indicadores WHERE fecha_registro >= CURDATE()");
+echo "Datos Financieros borrados: $n <br>";
+
+// Proyectos por TMS (Si se escapó alguno sin nota)
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_projet WHERE tms >= CURDATE()");
+echo "Proyectos (por TMS) borrados: $n <br>";
+
+// Clientes creados HOY (Estos sí usan datec correcto porque fue NOW())
+$n = ejecutar_borrado($pdo, "DELETE FROM llx_societe WHERE datec >= CURDATE()");
+echo "Clientes nuevos borrados: $n <br>";
+
+// 3. REACTIVAR PROTECCIÓN
+$pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+echo "<hr><h2 style='color:green'>✅ Limpieza Completada.</h2>";
