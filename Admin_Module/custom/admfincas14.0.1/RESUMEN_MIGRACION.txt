@@ -1,0 +1,140 @@
+RESUMEN DE REPLICACIÓN DEL MÓDULO ADMFINCAS
+============================================
+
+OBJETIVO:
+Replicar la funcionalidad del módulo admfincasaduplicar (versión nueva) 
+en el módulo admfincas (versión 1.0 para Dolibarr 14.0.1) ubicado en /custom
+
+ARCHIVOS ACTUALIZADOS/CREADOS:
+==============================
+
+1. ARCHIVOS PRINCIPALES DEL MÓDULO:
+
+   a) /custom/admfincas/core/modules/modAdmfincas.class.php
+      - Actualizado con configuración completa del módulo
+      - Activación de triggers: 'triggers' => 1
+      - Configuración de hooks para 'thirdpartycard'
+      - Menús integrados en el menú "Terceros" (companies)
+      - Permisos de lectura, escritura y eliminación de Admfinca
+      - Versión: 2.0
+      - Version mínima de Dolibarr: 12.0
+
+   b) /custom/admfincas/admin/setup.php (NUEVO)
+      - Página de configuración del módulo
+      - Configuración de modelos de numeración
+      - Interfaz de administración completa
+
+   c) /custom/admfincas/admfincasindex.php (NUEVO)
+      - Página de inicio del módulo
+      - Carga robusta del entorno Dolibarr
+      - Estructura de presentación básica
+
+2. ARCHIVOS DE LIBRERÍA:
+
+   a) /custom/admfincas/lib/admfincas_admfinca.lib.php
+      - Función admfincaPrepareHead() para gestión de pestañas
+      - Integración de pestañas: Ficha, Terceros, Facturas, Presupuestos, 
+        Pedidos, Proyectos, Contratos, Contactos, Notas, Documentos, Agenda
+      - Soporte para módulos externos
+
+   b) /custom/admfincas/lib/admfincas.lib.php
+      - Librería general del módulo (copiada desde duplicado)
+
+3. ARCHIVOS DE CLASE:
+
+   a) /custom/admfincas/class/admfinca.class.php
+      - Clase principal CRUD para Admfinca
+      - Extiende CommonObject
+      - Soporte completo para gestión de datos
+
+   b) /custom/admfincas/class/actions_admfincas.class.php
+      - Clase de acciones del módulo
+
+4. ARCHIVOS DE TRIGGERS:
+
+   a) /custom/admfincas/core/triggers/interface_99_modAdmfincas_Admfincas.class.php
+      - Interfaz de triggers para eventos del módulo
+
+5. ARCHIVOS DE MÓDULOS/NUMERACIÓN:
+
+   a) /custom/admfincas/core/modules/admfincas/
+      - Modelos de referencia y documentos
+      - mod_admfinca_standard.php
+      - mod_admfinca_advanced.php
+      - modules_admfinca.php
+      - Generadores de documentos PDF
+
+6. ARCHIVOS DE INTERFAZ DE ADMINISTRACIÓN:
+
+   a) /custom/admfincas/admin/about.php
+   b) /custom/admfincas/admin/admfinca_extrafields.php
+
+7. ARCHIVOS DE VISTAS/INTERFAZ:
+
+   a) /custom/admfincas/admfinca_agenda.php
+   b) /custom/admfincas/admfinca_card.php
+   c) /custom/admfincas/admfinca_contact.php
+   d) /custom/admfincas/admfinca_contracts.php
+   e) /custom/admfincas/admfinca_document.php
+   f) /custom/admfincas/admfinca_invoices.php
+   g) /custom/admfincas/admfinca_list.php
+   h) /custom/admfincas/admfinca_note.php
+   i) /custom/admfincas/admfinca_orders.php
+   j) /custom/admfincas/admfinca_projects.php
+   k) /custom/admfincas/admfinca_proposals.php
+   l) /custom/admfincas/admfinca_societe.php
+
+CAMBIOS DE CONFIGURACIÓN:
+==========================
+
+1. Menú principal ahora se integra bajo "Terceros" (fk_mainmenu=companies)
+   - Menú raíz: "Administradores Fincas"
+   - Submenú: "Listado"
+   - Submenú: "Nuevo Administrador"
+
+2. Hooks activados para 'thirdpartycard' para integración con fichas de terceros
+
+3. Triggers habilitados para eventos del módulo
+
+4. Modelos de documentos configurados (modAdmfinca_standard y modAdmfinca_advanced)
+
+VERIFICACIÓN REALIZADA:
+=======================
+
+✓ Sintaxis PHP verificada en todos los archivos principales
+✓ Estructura de directorios creada correctamente
+✓ Permisos de lectura habilitados
+✓ Configuración de módulo compatible con Dolibarr 14.0.1
+
+SIGUIENTE PASO:
+===============
+
+1. Accede a Administración > Módulos en Dolibarr
+2. Busca "admfincas" (debe estar en custom/admfincas)
+3. Haz clic en "Activar" o "Instalar"
+4. Si aparece página en blanco en configuración, verifica:
+   - Error logs de Apache/PHP en D:\xampp\apache\logs\
+   - Archivo de diagnóstico: /diagnóstico_admfincas.php
+   - Permisos de carpeta /custom/admfincas/
+   - Que el módulo esté completamente activado
+
+NOTAS IMPORTANTES:
+==================
+
+- El módulo mantiene compatibilidad con Dolibarr 12.0+
+- La versión del módulo es 2.0
+- Incluye soporte para extrafields (campos adicionales)
+- Integración con sistema de hooks y triggers de Dolibarr
+- Menús dinámicos basados en permisos de usuario
+
+PROBLEMAS POSIBLES:
+===================
+
+Si al configurar el módulo aparece página en blanco:
+
+1. Verificar logs: D:\xampp\apache\logs\error.log
+2. Activar debug en conf.php: $dolibarr_main_prod = "0"
+3. Revisar que no hay conflictos con otros módulos
+4. Asegurar que la base de datos está actualizada
+5. Verificar permisos del usuario administrador
+
